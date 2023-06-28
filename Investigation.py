@@ -1,10 +1,11 @@
-import pandas as pd
-import geopandas as gpd
+import os
 
-df = pd.read_parquet('WithTermPA/10s_africa_1020027430_1.parquet')
-link_nos = ', '.join([f"{x}" for x in df["LINKNO"]])
-print(link_nos)
+from Division import divide_nga
 
-gdf = gpd.read_file('DividingNGA/tdxhydro_streams_50s_australia/TDX_streamnet_5020049720_01.gpkg',
-                    where=f"LINKNO IN ({link_nos})")
-gdf.to_file('5020049720_1.gpkg')
+code = '7020038340'
+region = '70s_northamerica'
+out_dir = f'{region}_divided'
+stream_gpkg = os.path.join('DividingNGA', f'tdxhydro_streams_{region}', f'TDX_streamnet_{code}_01.gpkg')
+# gdf_path = os.path.join('DividingNGA', f'tdxhydro_basins_{region}', f'TDX_streamreach_basins_{code}_01.gpkg')
+
+divide_nga(stream_gpkg, out_dir, code, region)

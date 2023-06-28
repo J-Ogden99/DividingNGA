@@ -18,12 +18,8 @@ class NpEncoder(json.JSONEncoder):
         return super(NpEncoder, self).default(obj)
 
 
-# df = pd.read_parquet('DividingNGA/tdxhydro_streams_50s_australia/rapid_inputs_master.parquet')
-# print(df.columns)
-
-
-def create_adjoint_dict(network_shp, out_file: str = None, stream_id_col: str = "COMID",
-                        next_down_id_col: str = "NextDownID", order_col: str = "order_", trace_up: bool = True,
+def create_adjoint_dict(network_df, out_file: str = None, stream_id_col: str = "LINKNO",
+                        next_down_id_col: str = "DSLINKNO", order_col: str = "strmOrder", trace_up: bool = True,
                         order_filter: int = 0):
     """
         Creates a dictionary where each unique id in a stream network is assigned a list of all ids upstream or downstream
@@ -32,7 +28,7 @@ def create_adjoint_dict(network_shp, out_file: str = None, stream_id_col: str = 
         order. If filtered by stream order, the dictionary will only contain ids of the given stream order, with the
         upstream or downstream ids for the other streams in the chain that share that stream order.
         Args:
-            network_shp: path to .shp, .gpkg, .csv, or .parquet file that contains the stream network. This file
+            network_df:  geopandas geodataframe that contains the stream network or path to read for it. This file
                          must contain attributes for a unique id and a next down id, and if filtering by order number is
                          specified, it must also contain a column with stream order values.
             out_file: a path to an output file to write the dictionary as a .json, if desired.
@@ -47,15 +43,19 @@ def create_adjoint_dict(network_shp, out_file: str = None, stream_id_col: str = 
         Returns:
             The dictionary
     """
-    ext = os.path.splitext(network_shp)[1]
-    if ext == ".shp" or ext == ".gpkg":
-        network_df = gpd.read_file(network_shp)
-    elif ext == ".csv":
-        network_df = pd.read_csv(network_shp)
-    elif ext == ".parquet":
-        network_df = pd.read_parquet(network_shp)
-    else:
-        print("Invalid file type")
+    if isinstance(network_df, str):
+        ext = os.path.splitext(network_df)[1]
+        if ext == ".shp" or ext == ".gpkg":
+            network_df = gpd.read_file(network_df)
+        elif ext == ".csv":
+            network_df = pd.read_csv(network_df)
+        elif ext == ".parquet":
+            network_df = pd.read_parquet(network_df)
+        else:
+            print("Invalid file type")
+            return {}
+    elif not (isinstance(network_df, pd.DataFrame) or isinstance(network_df, gpd.GeoDataFrame)):
+        print("network_df is invalid type")
         return {}
     columns_to_search = [stream_id_col, next_down_id_col]
     if order_filter != 0:
@@ -68,8 +68,6 @@ def create_adjoint_dict(network_shp, out_file: str = None, stream_id_col: str = 
     g = nx.DiGraph()
 
     network_df.apply(lambda row: g.add_edge(row[next_down_id_col], row[stream_id_col]), axis=1)
-    print(g)
-    print(len(network_df))
 
     upstream_dict = {}
 
@@ -103,22 +101,23 @@ def create_adjoint_dict(network_shp, out_file: str = None, stream_id_col: str = 
     return upstream_dict
 
 
-adj_dict_2 = create_adjoint_dict('DividingNGA/tdxhydro_streams_50s_australia/rapid_inputs_master.parquet',
-                                 stream_id_col="LINKNO",
-                                 next_down_id_col="DSLINKNO",
-                                 order_col="strmOrder",
-                                 out_file="")
+if __name__ == "__main__":
+    adj_dict_2 = create_adjoint_dict('DividingNGA/tdxhydro_streams_50s_australia/rapid_inputs_master.parquet',
+                                     stream_id_col="LINKNO",
+                                     next_down_id_col="DSLINKNO",
+                                     order_col="strmOrder",
+                                     out_file="")
 
-with open("DividingNGA/tdxhydro_streams_10s_africa/adjoint_tree.json") as f:
-    adj_dict = json.load(f)
+    with open("DividingNGA/tdxhydro_streams_10s_africa/adjoint_tree.json") as f:
+        adj_dict = json.load(f)
 
-for id in adj_dict_2:
-    if id not in adj_dict:
-        print(id)
+    for id in adj_dict_2:
+        if id not in adj_dict:
+            print(id)
 
 
-# outlets = df.loc[df['DSLINKNO'] == -1, 'LINKNO'].values
-# for outlet in outlets
-#       list_of_ancestors = nx.ancestors(g, outlet)
-#       df[df['LINKNO'].isin(list_of_ancestors), 'TERMINALID'] = outlet
+    # outlets = df.loc[df['DSLINKNO'] == -1, 'LINKNO'].values
+    # for outlet in outlets
+    #       list_of_ancestors = nx.ancestors(g, outlet)
+    #       df[df['LINKNO'].isin(list_of_ancestors), 'TERMINALID'] = outlet
 
