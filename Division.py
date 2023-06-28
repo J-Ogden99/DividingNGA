@@ -51,7 +51,7 @@ def divide_nga(stream_file: str, out_dir: str, region: str, n: int = 10, max_siz
         full_basins[str(id)] = streams_tree[str(id)]
         basin_sizes[str(id)] = len(full_basins[str(id)])
 
-    # Add adjoint basin size to df, sort by that
+    # Add adjoint basin size to df, sort by that, also create empty region_lists to contain ids of rivers in each piece
     if max_size:
         n = int(len(streams) / max_size) + 1
     region_lists = [[] for i in range(n)]
@@ -61,6 +61,9 @@ def divide_nga(stream_file: str, out_dir: str, region: str, n: int = 10, max_siz
             lambda row: basin_sizes[str(int(row['TerminalNode']))] if int(row['TerminalNode']) != int(
                 row['LINKNO']) else 1, axis=1)
     streams = streams.sort_values('AdjSize', ascending=False).reset_index(drop=True)
+
+    # For each segment (row), spread the ids across the region_lists to evenly disperse basins by size, putting ids from
+    # the same adjoint basins together.
     for i in range(len(streams)):
         link_no = int(streams.iloc[i]['LINKNO'])
         t_pa = int(streams.iloc[i]['TerminalNode'])
@@ -82,6 +85,7 @@ def divide_nga(stream_file: str, out_dir: str, region: str, n: int = 10, max_siz
                 region_lists[region_no].append(link_no)
                 terminal_at[str(t_pa)] = region_no
 
+    # Start with fresh directory, select pieces of streams using the region_lists and write each piece separately
     if os.path.exists(out_dir):
         shutil.rmtree(out_dir)
     os.makedirs(out_dir)
