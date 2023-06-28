@@ -11,8 +11,8 @@ from AdjoinAsGraph import create_adjoint_dict
 def divide_nga(stream_file: str, out_dir: str, region: str, n: int = 10, max_size: int = None, adjoint_tree: str = None):
     """
     Splits a network file from the NGA delineation into smaller pieces and writes them to parquets, for ease of
-    computation. Pieces are composed of complete adjoint basins, but the constituent basins don't necessarily border
-    each other geographically.
+    computation. Pieces are composed of complete adjoint basins, but the constituent basins within a piece don't
+    necessarily border each other geographically.
     Args:
         stream_file (str): Path to network file. Can be .csv, .parquet, .shp, or .gpkg.
         out_dir (str): Path to directory which will contain the output pieces.
