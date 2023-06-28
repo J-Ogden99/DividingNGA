@@ -1,0 +1,13 @@
+name: dividenga  # Replace with your desired environment name
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9  # Replace with your desired Python version
+  - numpy
+  - pandas
+  - geopandas
+  - networkx
+  - xarray
+  - matplotlib
+  - plotly
