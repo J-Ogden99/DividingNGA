@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+from glob import glob
 
 import geopandas as gpd
 import pandas as pd
@@ -88,8 +89,10 @@ def divide_nga(stream_file: str, out_dir: str, region: str, n: int = 10, max_siz
 
     # Start with fresh directory, select pieces of streams using the region_lists and write each piece separately
     if os.path.exists(out_dir):
-        shutil.rmtree(out_dir)
-    os.makedirs(out_dir)
+        for file in glob(os.path.join(out_dir, f'{region}_*.parquet')):
+            os.remove(file)
+    else:
+        os.makedirs(out_dir)
 
     for i, lst in enumerate(region_lists):
         streams.loc[streams['LINKNO'].isin(lst)].to_parquet(os.path.join(out_dir, f'{region}_{i + 1}.parquet'))
