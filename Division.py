@@ -53,7 +53,8 @@ def divide_nga(stream_file: str, out_dir: str, region: str, n: int = 10, max_siz
 
     # Add adjoint basin size to df, sort by that, also create empty region_lists to contain ids of rivers in each piece
     if max_size:
-        n = int(len(streams) / max_size) + 1
+        new_n = int(len(streams) / max_size) + 1
+        n = new_n if new_n > n else n  # Only change if new number of parts is more than the defined amount
     region_lists = [[] for i in range(n)]
     terminal_at = {}
     streams['AdjSize'] = \
